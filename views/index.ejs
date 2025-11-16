@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BookHive</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      overflow-x: hidden;
+      background: #0a0a0a;
+      color: #ffffff;
+    }
+
+    /* Hero Section */
+    .hero {
+      min-height: 100vh;
+      background: linear-gradient(135deg,
+          #0a0a0a 0%,
+          #1a1a2e 50%,
+          #0f3460 100%);
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: "";
+      position: absolute;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle,
+          rgba(229, 9, 20, 0.1) 0%,
+          transparent 70%);
+      animation: pulse 15s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        transform: scale(1) rotate(0deg);
+        opacity: 0.3;
+      }
+
+      50% {
+        transform: scale(1.2) rotate(180deg);
+        opacity: 0.6;
+      }
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 2;
+      text-align: center;
+      padding: 2rem;
+      max-width: 1200px;
+    }
+
+    .logo-section {
+      margin-bottom: 2rem;
+      animation: fadeInDown 1s ease-out;
+    }
+
+    .college-logo {
+      font-size: clamp(2.5rem, 6vw, 5rem);
+      font-weight: 900;
+      margin-bottom: 1rem;
+      letter-spacing: 0.5rem;
+    }
+
+    .tt {
+      color: #57d8fa;
+      text-shadow: 0 0 20px rgba(87, 216, 250, 0.5);
+    }
+
+    .g {
+      color: #28a1be;
+      text-shadow: 0 0 20px rgba(40, 161, 190, 0.5);
+    }
+
+    .p {
+      color: #fab440;
+      text-shadow: 0 0 20px rgba(250, 180, 64, 0.5);
+    }
+
+    .c {
+      color: #fe5784;
+      text-shadow: 0 0 20px rgba(254, 87, 132, 0.5);
+    }
+
+    .e {
+      color: #cc0e41;
+      text-shadow: 0 0 20px rgba(204, 14, 65, 0.5);
+    }
+
+    .t {
+      color: #73b66b;
+      text-shadow: 0 0 20px rgba(115, 182, 107, 0.5);
+    }
+
+    .hero-title {
+      font-size: clamp(2rem, 5vw, 4rem);
+      font-weight: 800;
+      margin-bottom: 1.5rem;
+      background: linear-gradient(135deg, #ffffff 0%, #57d8fa 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: fadeInUp 1s ease-out 0.3s both;
+    }
+
+    .hero-subtitle {
+      font-size: clamp(1.1rem, 2.5vw, 1.5rem);
+      color: #b0b0b0;
+      margin-bottom: 3rem;
+      line-height: 1.6;
+      animation: fadeInUp 1s ease-out 0.6s both;
+    }
+
+    .hero-cta {
+      display: flex;
+      gap: 1.5rem;
+      justify-content: center;
+      flex-wrap: wrap;
+      animation: fadeInUp 1s ease-out 0.9s both;
+    }
+
+    .cta-button {
+      padding: 1.2rem 3rem;
+      font-size: 1.1rem;
+      font-weight: 600;
+      border: none;
+      border-radius: 50px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    .cta-primary {
+      background: linear-gradient(135deg, #e50914 0%, #b20710 100%);
+      color: white;
+      box-shadow: 0 10px 30px rgba(229, 9, 20, 0.4);
+    }
+
+    .cta-primary:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 15px 40px rgba(229, 9, 20, 0.6);
+    }
+
+    .cta-secondary {
+      background: rgba(255, 255, 255, 0.05);
+      color: white;
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(10px);
+    }
+
+    .cta-secondary:hover {
+      background: rgba(255, 255, 255, 0.1);
+      transform: translateY(-5px);
+    }
+
+    /* Floating Books Animation */
+    .floating-books {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .book-icon {
+      position: absolute;
+      font-size: 3rem;
+      opacity: 0.1;
+      animation: float 20s infinite ease-in-out;
+    }
+
+    .book-icon:nth-child(1) {
+      left: 10%;
+      top: 20%;
+      animation-delay: 0s;
+    }
+
+    .book-icon:nth-child(2) {
+      left: 80%;
+      top: 30%;
+      animation-delay: 2s;
+    }
+
+    .book-icon:nth-child(3) {
+      left: 20%;
+      top: 60%;
+      animation-delay: 4s;
+    }
+
+    .book-icon:nth-child(4) {
+      left: 70%;
+      top: 70%;
+      animation-delay: 6s;
+    }
+
+    .book-icon:nth-child(5) {
+      left: 40%;
+      top: 80%;
+      animation-delay: 8s;
+    }
+
+    @keyframes float {
+
+      0%,
+      100% {
+        transform: translateY(0px) rotate(0deg);
+      }
+
+      50% {
+        transform: translateY(-30px) rotate(10deg);
+      }
+    }
+
+    /* Features Section */
+    .features {
+      padding: 6rem 2rem;
+      background: linear-gradient(180deg, #1a1a2e 0%, #0a0a0a 100%);
+    }
+
+    .features-container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .section-title {
+      text-align: center;
+      font-size: clamp(2rem, 4vw, 3rem);
+      margin-bottom: 1rem;
+      background: linear-gradient(135deg, #ffffff 0%, #57d8fa 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .section-subtitle {
+      text-align: center;
+      color: #888;
+      font-size: 1.2rem;
+      margin-bottom: 4rem;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 2rem;
+    }
+
+    .feature-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+      padding: 2.5rem;
+      text-align: center;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .feature-card::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #57d8fa);
+      transform: translateX(-100%);
+      transition: transform 0.5s ease;
+    }
+
+    .feature-card:hover::before {
+      transform: translateX(0);
+    }
+
+    .feature-card:hover {
+      transform: translateY(-10px);
+      border-color: rgba(229, 9, 20, 0.5);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    }
+
+    .feature-icon {
+      font-size: 4rem;
+      margin-bottom: 1.5rem;
+      color: #57d8fa;
+      display: inline-block;
+      animation: bounce 2s infinite;
+    }
+
+    @keyframes bounce {
+
+      0%,
+      100% {
+        transform: translateY(0);
+      }
+
+      50% {
+        transform: translateY(-10px);
+      }
+    }
+
+    .feature-card:hover .feature-icon {
+      animation: none;
+      transform: scale(1.2);
+      transition: transform 0.3s ease;
+    }
+
+    .feature-title {
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+      color: #57d8fa;
+    }
+
+    .feature-description {
+      color: #b0b0b0;
+      line-height: 1.6;
+    }
+
+    /* Stats Section */
+    .stats {
+      padding: 4rem 2rem;
+      background: rgba(229, 9, 20, 0.05);
+    }
+
+    .stats-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 3rem;
+      text-align: center;
+    }
+
+    .stat-item {
+      padding: 2rem;
+    }
+
+    .stat-number {
+      font-size: clamp(2.5rem, 5vw, 4rem);
+      font-weight: 800;
+      background: linear-gradient(135deg, #e50914 0%, #57d8fa 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 0.5rem;
+    }
+
+    .stat-label {
+      color: #888;
+      font-size: 1.1rem;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+
+    /* CTA Section */
+    .cta-section {
+      padding: 6rem 2rem;
+      background: linear-gradient(135deg, #0f3460 0%, #1a1a2e 100%);
+      text-align: center;
+    }
+
+    .cta-content {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .cta-title {
+      font-size: clamp(2rem, 4vw, 3rem);
+      margin-bottom: 1.5rem;
+    }
+
+    .cta-text {
+      font-size: 1.2rem;
+      color: #b0b0b0;
+      margin-bottom: 2rem;
+      line-height: 1.6;
+    }
+
+    /* Animations */
+    @keyframes fadeInDown {
+      from {
+        opacity: 0;
+        transform: translateY(-30px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .hero-cta {
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .cta-button {
+        width: 100%;
+        max-width: 300px;
+      }
+
+      .features-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+
+<body>
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="floating-books">
+      <div class="book-icon">📚</div>
+      <div class="book-icon">📖</div>
+      <div class="book-icon">📕</div>
+      <div class="book-icon">📗</div>
+      <div class="book-icon">📘</div>
+    </div>
+
+    <div class="hero-content">
+      <div class="logo-section">
+        <div class="college-logo">
+          <span class="tt">B</span><span class="g">o</span><span class="p">o</span><span class="c">k</span><span
+            class="e">H</span><span class="t">ive</span>
+        </div>
+      </div>
+
+      <h1 class="hero-title">Book Recommender System</h1>
+      <p class="hero-subtitle">
+        Discover thousands of books, explore diverse collections, and find
+        your next favorite read.
+        <br />Your gateway to knowledge and imagination.
+      </p>
+
+      <div class="hero-cta">
+        <a href="/books" class="cta-button cta-primary">
+          Explore Library
+        </a>
+        <a href="#features" class="cta-button cta-secondary"> Learn More </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features Section -->
+  <section id="features" class="features">
+    <div class="features-container">
+      <h2 class="section-title">Why Choose Our Library?</h2>
+      <p class="section-subtitle">
+        Everything you need for an amazing reading experience
+      </p>
+
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">
+            <i class="fa-solid fa-book-open"></i>
+          </div>
+          <h3 class="feature-title">Vast Collection</h3>
+          <p class="feature-description">
+            Access thousands of books across multiple genres, from classic literature to modern bestsellers.
+          </p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">
+            <i class="fa-solid fa-magnifying-glass"></i>
+          </div>
+          <h3 class="feature-title">Smart Search</h3>
+          <p class="feature-description">
+            Find exactly what you're looking for with our intelligent search and recommendation system.
+          </p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">
+            <i class="fa-solid fa-bolt"></i>
+          </div>
+          <h3 class="feature-title">Fast & Easy</h3>
+          <p class="feature-description">
+            Browse, search, and discover books with our intuitive and lightning-fast interface.
+          </p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">
+            <i class="fa-solid fa-globe"></i>
+          </div>
+          <h3 class="feature-title">Global Authors</h3>
+          <p class="feature-description">
+            Explore works from authors around the world, spanning different cultures and perspectives.
+          </p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">
+            <i class="fa-solid fa-circle-info"></i>
+          </div>
+          <h3 class="feature-title">Detailed Info</h3>
+          <p class="feature-description">
+            Get comprehensive information about each book including author, country, and descriptions.
+          </p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">
+            <i class="fa-solid fa-lightbulb"></i>
+          </div>
+          <h3 class="feature-title">Recommendations</h3>
+          <p class="feature-description">
+            Discover new books based on your interests with our smart recommendation engine.
+          </p>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Stats Section -->
+  <section class="stats">
+    <div class="stats-container">
+      <div class="stat-item">
+        <div class="stat-number" id="booksCount">1000+</div>
+        <div class="stat-label">Books</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-number">50+</div>
+        <div class="stat-label">Countries</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-number">100+</div>
+        <div class="stat-label">Authors</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-number">24/7</div>
+        <div class="stat-label">Access</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Section -->
+  <section class="cta-section">
+    <div class="cta-content">
+      <h2 class="cta-title">Ready to Start Reading?</h2>
+      <p class="cta-text">
+        Join our community of book lovers and embark on countless literary
+        adventures. Your next favorite book is waiting for you.
+      </p>
+      <a href="/books" class="cta-button cta-primary explore-cta">
+        Start Exploring Now
+      </a>
+    </div>
+  </section>
+
+  <script>
+    // Smooth scroll for anchor links
+    document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
+      anchor.addEventListener("click", function (e) {
+        e.preventDefault();
+        const target = document.querySelector(this.getAttribute("href"));
+        if (target) {
+          target.scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+          });
+        }
+      });
+    });
+
+    // Counter animation
+    function animateCounter(element, target) {
+      let current = 0;
+      const increment = target / 100;
+      const timer = setInterval(() => {
+        current += increment;
+        if (current >= target) {
+          element.textContent = target + "+";
+          clearInterval(timer);
+        } else {
+          element.textContent = Math.floor(current) + "+";
+        }
+      }, 20);
+    }
+
+    // Trigger counter when stats section is visible
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          const counter = entry.target.querySelector("#booksCount");
+          if (counter && counter.textContent === "1000+") {
+            animateCounter(counter, 1000);
+          }
+        }
+      });
+    });
+
+    const statsSection = document.querySelector(".stats");
+    if (statsSection) {
+      observer.observe(statsSection);
+    }
+  </script>
+</body>
+
+</html>
