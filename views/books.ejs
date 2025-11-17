@@ -529,7 +529,8 @@
     .meta-tag {
       display: flex;
       align-items: center;
-      gap: 0.5rem;;
+      gap: 0.5rem;
+      ;
       background: rgba(87, 216, 250, 0.1);
       color: #57d8fa;
       padding: 0.5rem 1rem;
@@ -837,12 +838,18 @@
           </button>
         </div> -->
       <div class="scroll-categories">
-        <a class="cat-chip <%= category === 'all' ? 'active' : '' %>" href="/books?category=all">
+        <a class="cat-chip <%= category === 'all' ? 'active' : '' %>" data-category="all"
+          href="/books?category=all&title=<%= queryTitle %>">
           All Books
         </a>
 
+        <a class="cat-chip <%= category === 'favorites' ? 'active' : '' %>" data-category="favorites"
+          href="/books?category=favorites&title=<%= queryTitle %>">
+          Favorites
+        </a>
+
         <% categories.forEach(cat=> { %>
-          <a class="cat-chip <%= category === cat ? 'active' : '' %>"
+          <a class="cat-chip <%= category === cat ? 'active' : '' %>" data-category="<%= cat %>"
             href="/books?category=<%= cat %>&title=<%= queryTitle %>">
             <%= cat %>
           </a>
@@ -890,8 +897,8 @@
                     <%= data.price %>
                   </div>
                   <% } %>
-                    <img class="book-image" src="<%= data.image %>" alt="<%= data.title[0] %>"
-                      onerror="this.src='https://via.placeholder.com/300x450?text=No+Image'" />
+                    <img class="book-image" src="<%= data.image %>" alt="<%= data.title %>"
+                      onerror="this.onerror=null; this.src='/fallback.png';" />
                     <div class="book-overlay">
                       <div class="overlay-tags">
                         <span class="overlay-tag">
@@ -906,8 +913,8 @@
               <div class="book-content">
                 <div>
                   <h2 class="book-title">
-                    <%= data.title[0] %>
-                      <%= data.title[1] || '' %>
+                    <%= data.title %>
+                      <%= data.category || '' %>
                   </h2>
                   <p class="book-description">
                     <%= data.description %>
@@ -973,7 +980,7 @@
   </div>
 
   <script>
-    // Debounce function
+    // ---------- HELPERS ----------
     function debounce(func, delay) {
       let timeout;
       return (...args) => {
@@ -982,263 +989,78 @@
       };
     }
 
-    // Search functionality
-    const searchForm = document.getElementById("searchForm");
-    const searchInput = document.getElementById("searchInput");
-    const clearBtn = document.getElementById("clearBtn");
+    function getFavorites() {
+      try {
+        return JSON.parse(localStorage.getItem("favorites") || "[]");
+      } catch (e) {
+        return [];
+      }
+    }
 
-    searchInput.addEventListener(
-      "input",
-      debounce(() => {
-        clearBtn.style.display = searchInput.value ? "block" : "none";
-        searchForm.submit();
-      }, 600)
-    );
+    function setFavorites(list) {
+      localStorage.setItem("favorites", JSON.stringify(list));
+    }
 
-    clearBtn.addEventListener("click", () => {
-      searchInput.value = "";
-      clearBtn.style.display = "none";
-      window.location.href = "/books";
-    });
-
-    // View toggle
-    const gridViewBtn = document.getElementById("gridView");
-    const listViewBtn = document.getElementById("listView");
-    const booksGrid = document.getElementById("booksGrid");
-
-    gridViewBtn.addEventListener("click", () => {
-      booksGrid.classList.remove("list-view");
-      gridViewBtn.classList.add("active");
-      listViewBtn.classList.remove("active");
-    });
-
-    listViewBtn.addEventListener("click", () => {
-      booksGrid.classList.add("list-view");
-      listViewBtn.classList.add("active");
-      gridViewBtn.classList.remove("active");
-    });
-
-    // Filter chips
-    const filterChips = document.querySelectorAll(".filter-chip");
-    filterChips.forEach((chip) => {
-      chip.addEventListener("click", () => {
-        filterChips.forEach((c) => c.classList.remove("active"));
-        chip.classList.add("active");
-        // Add filter logic here
-      });
-    });
-
-    // Favorite functionality
+    // Make toggleFavorite usable from inline onclick=""
     function toggleFavorite(event, bookId) {
       event.stopPropagation();
       const btn = event.currentTarget;
-      btn.classList.toggle("active");
-      btn.textContent = btn.classList.contains("active") ? "♥" : "♡";
 
-      // Save to localStorage
-      let favorites = JSON.parse(localStorage.getItem("favorites") || "[]");
-      if (btn.classList.contains("active")) {
-        favorites.push(bookId);
-      } else {
+      let favorites = getFavorites();
+      const exists = favorites.includes(bookId);
+
+      if (exists) {
         favorites = favorites.filter((id) => id !== bookId);
+        btn.classList.remove("active");
+        btn.textContent = "♡";
+      } else {
+        favorites.push(bookId);
+        btn.classList.add("active");
+        btn.textContent = "♥";
       }
-      localStorage.setItem("favorites", JSON.stringify(favorites));
+
+      setFavorites(favorites);
     }
 
-    // Load favorites on page load
-    window.addEventListener("load", () => {
-      const favorites = JSON.parse(localStorage.getItem("favorites") || "[]");
-      favorites.forEach((id) => {
-        const card = document.querySelector(`[data-book-id="${id}"]`);
-        if (card) {
-          const btn = card.querySelector(".book-favorite");
-          btn.classList.add("active");
-          btn.textContent = "♥";
-        }
-      });
-    });
-
-    // Pagination
-    const booksPerPage = 6;
-    let books = document.querySelectorAll(".book-card");
+    // ---------- DOM REFS ----------
+    const searchForm = document.getElementById("searchForm");
+    const searchInput = document.getElementById("searchInput");
+    const clearBtn = document.getElementById("clearBtn");
+    const booksGrid = document.getElementById("booksGrid");
+    const loadingEl = document.getElementById("loading");
+    const totalCountEl = document.getElementById("totalCount");
+    const displayCountEl = document.getElementById("displayCount");
     const pagination = document.getElementById("pagination");
-    const displayCount = document.getElementById("displayCount");
+    const gridViewBtn = document.getElementById("gridView");
+    const listViewBtn = document.getElementById("listView");
+    const catChips = document.querySelectorAll(".cat-chip");
+
+    const booksPerPage = 6;
+    let books = []; // NodeList of .book-card (after render)
+    let allBooks = []; // raw data from server for current base category
     let currentPage = 1;
+    let currentCategory =
+      document.querySelector(".cat-chip.active")?.dataset.category || "all";
 
-    function showPage(page, shouldScroll = true) {
-      const totalPages = Math.ceil(books.length / booksPerPage);
-      if (page < 1) page = 1;
-      if (page > totalPages) page = totalPages;
-      currentPage = page;
-
-      let visibleCount = 0;
-      books.forEach((book, idx) => {
-        const shouldShow =
-          idx >= (page - 1) * booksPerPage && idx < page * booksPerPage;
-        book.style.display = shouldShow ? "flex" : "none";
-        if (shouldShow) visibleCount++;
-      });
-
-      displayCount.textContent = visibleCount;
-      renderPagination(totalPages);
-
-      // Only scroll when shouldScroll = true
-      if (shouldScroll) {
-        window.scrollTo({ top: 0, behavior: "smooth" });
+    // ---------- OBSERVERS ----------
+    const cardObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry, idx) => {
+          if (entry.isIntersecting) {
+            setTimeout(() => {
+              entry.target.style.opacity = "1";
+              entry.target.style.transform = "translateY(0)";
+            }, idx * 60);
+            cardObserver.unobserve(entry.target);
+          }
+        });
+      },
+      {
+        threshold: 0.1,
+        rootMargin: "0px 0px -50px 0px",
       }
-    }
+    );
 
-    function renderPagination(totalPages) {
-      pagination.innerHTML = "";
-      if (totalPages <= 1) return;
-
-      // Previous button
-      const prevBtn = document.createElement("button");
-      prevBtn.textContent = "← Prev";
-      prevBtn.className = "page-btn";
-      prevBtn.disabled = currentPage === 1;
-      prevBtn.onclick = () => showPage(currentPage - 1);
-      pagination.appendChild(prevBtn);
-
-      // Page numbers with ellipsis
-      const maxVisible = 5;
-      let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
-      let endPage = Math.min(totalPages, startPage + maxVisible - 1);
-
-      if (endPage - startPage < maxVisible - 1) {
-        startPage = Math.max(1, endPage - maxVisible + 1);
-      }
-
-      // First page
-      if (startPage > 1) {
-        const btn = document.createElement("button");
-        btn.textContent = "1";
-        btn.className = "page-btn";
-        btn.onclick = () => showPage(1);
-        pagination.appendChild(btn);
-
-        if (startPage > 2) {
-          const ellipsis = document.createElement("span");
-          ellipsis.textContent = "...";
-          ellipsis.style.padding = "0.7rem";
-          ellipsis.style.color = "#666";
-          pagination.appendChild(ellipsis);
-        }
-      }
-
-      // Page numbers
-      for (let i = startPage; i <= endPage; i++) {
-        const btn = document.createElement("button");
-        btn.textContent = i;
-        btn.className = "page-btn" + (i === currentPage ? " active" : "");
-        btn.onclick = () => showPage(i);
-        pagination.appendChild(btn);
-      }
-
-      // Last page
-      if (endPage < totalPages) {
-        if (endPage < totalPages - 1) {
-          const ellipsis = document.createElement("span");
-          ellipsis.textContent = "...";
-          ellipsis.style.padding = "0.7rem";
-          ellipsis.style.color = "#666";
-          pagination.appendChild(ellipsis);
-        }
-
-        const btn = document.createElement("button");
-        btn.textContent = totalPages;
-        btn.className = "page-btn";
-        btn.onclick = () => showPage(totalPages);
-        pagination.appendChild(btn);
-      }
-
-      // Next button
-      const nextBtn = document.createElement("button");
-      nextBtn.textContent = "Next →";
-      nextBtn.className = "page-btn";
-      nextBtn.disabled = currentPage === totalPages;
-      nextBtn.onclick = () => showPage(currentPage + 1);
-      pagination.appendChild(nextBtn);
-    }
-
-    // Keyboard navigation
-    document.addEventListener("keydown", (e) => {
-      const totalPages = Math.ceil(books.length / booksPerPage);
-      if (e.key === "ArrowLeft" && currentPage > 1) {
-        showPage(currentPage - 1);
-      } else if (e.key === "ArrowRight" && currentPage < totalPages) {
-        showPage(currentPage + 1);
-      }
-    });
-
-    // Initialize
-    if (books.length > 0) {
-      showPage(1);
-    } else {
-      displayCount.textContent = "0";
-    }
-
-    // Smooth scroll for card clicks
-    document.querySelectorAll(".book-card").forEach((card) => {
-      card.addEventListener("click", (e) => {
-        if (
-          !e.target.closest(".book-favorite") &&
-          !e.target.closest(".action-btn")
-        ) {
-          const form = card.querySelector("form");
-          if (form) form.submit();
-        }
-      });
-    });
-
-    // Add loading animation on form submit
-    searchForm.addEventListener("submit", () => {
-      document.getElementById("loading").style.display = "block";
-    });
-
-    // Intersection Observer for card animations
-    const observerOptions = {
-      threshold: 0.1,
-      rootMargin: "0px 0px -50px 0px",
-    };
-
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach((entry, index) => {
-        if (entry.isIntersecting) {
-          setTimeout(() => {
-            entry.target.style.opacity = "1";
-            entry.target.style.transform = "translateY(0)";
-          }, index * 100);
-          observer.unobserve(entry.target);
-        }
-      });
-    }, observerOptions);
-
-    // Apply animation to visible cards
-    books.forEach((card) => {
-      card.style.opacity = "0";
-      card.style.transform = "translateY(30px)";
-      card.style.transition = "opacity 0.6s ease, transform 0.6s ease";
-      observer.observe(card);
-    });
-
-    // Search suggestions (optional enhancement)
-    const searchSuggestions = [
-      "Fiction",
-      "Non-Fiction",
-      "Science",
-      "History",
-      "Biography",
-      "Mystery",
-      "Romance",
-      "Thriller",
-    ];
-
-    searchInput.addEventListener("focus", () => {
-      // You can implement autocomplete suggestions here
-    });
-
-    // Performance optimization: Lazy load images
     const imageObserver = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
         if (entry.isIntersecting) {
@@ -1252,150 +1074,361 @@
       });
     });
 
-    document.querySelectorAll(".book-image").forEach((img) => {
-      imageObserver.observe(img);
+    // ---------- VIEW TOGGLE ----------
+    gridViewBtn.addEventListener("click", () => {
+      booksGrid.classList.remove("list-view");
+      gridViewBtn.classList.add("active");
+      listViewBtn.classList.remove("active");
     });
 
-    // Add reading time estimator
-    document.querySelectorAll(".book-description").forEach((desc) => {
-      const wordCount = desc.textContent.split(" ").length;
-      const readingTime = Math.ceil(wordCount / 200); // Average reading speed
-      if (readingTime > 0) {
-        const timeTag = document.createElement("span");
-        timeTag.className = "meta-tag";
-        timeTag.innerHTML = `⏱ ${readingTime} min read`;
-        timeTag.style.background = "rgba(250, 180, 64, 0.1)";
-        timeTag.style.color = "#fab440";
-        timeTag.style.borderColor = "rgba(250, 180, 64, 0.3)";
-        const metaContainer = desc
-          .closest(".book-content")
-          .querySelector(".book-meta");
-        if (metaContainer) {
-          metaContainer.appendChild(timeTag);
-        }
+    listViewBtn.addEventListener("click", () => {
+      booksGrid.classList.add("list-view");
+      listViewBtn.classList.add("active");
+      gridViewBtn.classList.remove("active");
+    });
+
+    // ---------- PAGINATION ----------
+    function showPage(page, shouldScroll = true) {
+      const totalPages = Math.ceil(books.length / booksPerPage);
+      if (totalPages === 0) {
+        displayCountEl.textContent = "0";
+        pagination.innerHTML = "";
+        return;
       }
-    });
 
-    // Share functionality
-    function shareBook(bookId, title) {
-      if (navigator.share) {
-        navigator
-          .share({
-            title: title,
-            text: `Check out this book: ${title}`,
-            url: window.location.origin + "/books/" + bookId,
-          })
-          .catch((err) => console.log("Error sharing:", err));
-      } else {
-        // Fallback: Copy to clipboard
-        const url = window.location.origin + "/books/" + bookId;
-        navigator.clipboard.writeText(url);
-        alert("Link copied to clipboard!");
+      if (page < 1) page = 1;
+      if (page > totalPages) page = totalPages;
+      currentPage = page;
+
+      let visibleCount = 0;
+      books.forEach((book, idx) => {
+        const shouldShow =
+          idx >= (page - 1) * booksPerPage && idx < page * booksPerPage;
+        book.style.display = shouldShow ? (booksGrid.classList.contains("list-view") ? "flex" : "flex") : "none";
+        if (shouldShow) visibleCount++;
+      });
+
+      displayCountEl.textContent = visibleCount;
+      renderPagination(totalPages);
+
+      if (shouldScroll) {
+        window.scrollTo({ top: 0, behavior: "smooth" });
       }
     }
 
-    // Add tooltip for truncated text
-    document
-      .querySelectorAll(".book-title, .book-description")
-      .forEach((element) => {
-        element.addEventListener("mouseenter", function () {
-          if (this.scrollHeight > this.clientHeight) {
-            this.title = this.textContent;
+    function renderPagination(totalPages) {
+      pagination.innerHTML = "";
+      if (totalPages <= 1) return;
+
+      // Prev
+      const prevBtn = document.createElement("button");
+      prevBtn.textContent = "← Prev";
+      prevBtn.className = "page-btn";
+      prevBtn.disabled = currentPage === 1;
+      prevBtn.onclick = () => showPage(currentPage - 1);
+      pagination.appendChild(prevBtn);
+
+      const maxVisible = 5;
+      let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+      let endPage = Math.min(totalPages, startPage + maxVisible - 1);
+
+      if (endPage - startPage < maxVisible - 1) {
+        startPage = Math.max(1, endPage - maxVisible + 1);
+      }
+
+      // First + ellipsis
+      if (startPage > 1) {
+        const firstBtn = document.createElement("button");
+        firstBtn.textContent = "1";
+        firstBtn.className = "page-btn";
+        firstBtn.onclick = () => showPage(1);
+        pagination.appendChild(firstBtn);
+
+        if (startPage > 2) {
+          const ellipsis = document.createElement("span");
+          ellipsis.textContent = "...";
+          ellipsis.style.padding = "0.7rem";
+          ellipsis.style.color = "#666";
+          pagination.appendChild(ellipsis);
+        }
+      }
+
+      // Middle pages
+      for (let i = startPage; i <= endPage; i++) {
+        const btn = document.createElement("button");
+        btn.textContent = i;
+        btn.className = "page-btn" + (i === currentPage ? " active" : "");
+        btn.onclick = () => showPage(i);
+        pagination.appendChild(btn);
+      }
+
+      // Last + ellipsis
+      if (endPage < totalPages) {
+        if (endPage < totalPages - 1) {
+          const ellipsis = document.createElement("span");
+          ellipsis.textContent = "...";
+          ellipsis.style.padding = "0.7rem";
+          ellipsis.style.color = "#666";
+          pagination.appendChild(ellipsis);
+        }
+
+        const lastBtn = document.createElement("button");
+        lastBtn.textContent = totalPages;
+        lastBtn.className = "page-btn";
+        lastBtn.onclick = () => showPage(totalPages);
+        pagination.appendChild(lastBtn);
+      }
+
+      // Next
+      const nextBtn = document.createElement("button");
+      nextBtn.textContent = "Next →";
+      nextBtn.className = "page-btn";
+      nextBtn.disabled = currentPage === totalPages;
+      nextBtn.onclick = () => showPage(currentPage + 1);
+      pagination.appendChild(nextBtn);
+    }
+
+    document.addEventListener("keydown", (e) => {
+      const totalPages = Math.ceil(books.length / booksPerPage);
+      if (e.key === "ArrowLeft" && currentPage > 1) {
+        showPage(currentPage - 1);
+      } else if (e.key === "ArrowRight" && currentPage < totalPages) {
+        showPage(currentPage + 1);
+      }
+    });
+
+    // ---------- RENDERING ----------
+    function renderBooks(list) {
+      // Remove old cards / empty state
+      booksGrid
+        .querySelectorAll(".book-card, .empty-state")
+        .forEach((el) => el.remove());
+
+      if (!list || list.length === 0) {
+        totalCountEl.textContent = "0";
+        displayCountEl.textContent = "0";
+        pagination.innerHTML = "";
+        booksGrid.innerHTML += `
+        <div class="empty-state">
+          <div class="empty-icon">📚</div>
+          <h2>No books found</h2>
+          <p>Try a different search or category</p>
+        </div>`;
+        return;
+      }
+
+      const favorites = getFavorites();
+
+      list.forEach((book) => {
+        const isFav = favorites.includes(String(book._id));
+
+        const cardHtml = `
+        <div class="book-card" data-book-id="${book._id}">
+          <div class="book-image-container">
+            <button class="book-favorite ${isFav ? "active" : ""}"
+                    onclick="toggleFavorite(event, '${book._id}')">
+              ${isFav ? "♥" : "♡"}
+            </button>
+            ${book.price ? `<div class="book-badge">${book.price}</div>` : ""}
+            <img class="book-image"
+                 src="${book.image || "/fallback.png"}"
+                 alt="${book.title || ""}"
+                 onerror="this.onerror=null; this.src='/fallback.png';" />
+            <div class="book-overlay">
+              <div class="overlay-tags">
+                <span class="overlay-tag">${book.author || "Unknown"}</span>
+                <span class="overlay-tag">${book.country || "N/A"}</span>
+              </div>
+            </div>
+          </div>
+          <div class="book-content">
+            <div>
+              <h2 class="book-title">${book.title || "Untitled"}</h2>
+              <p class="book-description">${book.description || ""}</p>
+            </div>
+            <div class="book-meta">
+              <span class="meta-tag">${book.author || "Unknown"}</span>
+              <span class="meta-tag">${book.country || "N/A"}</span>
+            </div>
+            <div class="book-actions">
+              <form action="/books/${book._id}" style="flex: 1">
+                <button class="action-btn" type="submit">
+                  <span>View Details →</span>
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      `;
+
+        booksGrid.insertAdjacentHTML("beforeend", cardHtml);
+      });
+
+      // Re-select book nodes
+      books = booksGrid.querySelectorAll(".book-card");
+      totalCountEl.textContent = list.length;
+
+      // Card animations + lazy images + click behavior + reading-time
+      books.forEach((card) => {
+        card.style.opacity = "0";
+        card.style.transform = "translateY(30px)";
+        card.style.transition = "opacity 0.6s ease, transform 0.6s ease";
+        cardObserver.observe(card);
+
+        card.addEventListener("click", (e) => {
+          if (
+            !e.target.closest(".book-favorite") &&
+            !e.target.closest(".action-btn")
+          ) {
+            const form = card.querySelector("form");
+            if (form) form.submit();
           }
         });
       });
 
-    // Print statistics in console
-    console.log(` Total Books: ${books.length}`);
-    console.log(` Pages: ${Math.ceil(books.length / booksPerPage)}`);
-    console.log(
-      ` Favorites: ${JSON.parse(localStorage.getItem("favorites") || "[]").length
-      }`
+      booksGrid.querySelectorAll(".book-image").forEach((img) => {
+        imageObserver.observe(img);
+      });
+
+      // Reading time estimator
+      booksGrid.querySelectorAll(".book-description").forEach((desc) => {
+        const text = desc.textContent || "";
+        const wordCount = text.split(/\s+/).filter(Boolean).length;
+        const readingTime = Math.ceil(wordCount / 200);
+        if (readingTime > 0) {
+          const timeTag = document.createElement("span");
+          timeTag.className = "meta-tag";
+          timeTag.innerHTML = `⏱ ${readingTime} min read`;
+          timeTag.style.background = "rgba(250, 180, 64, 0.1)";
+          timeTag.style.color = "#fab440";
+          timeTag.style.borderColor = "rgba(250, 180, 64, 0.3)";
+          const metaContainer = desc
+            .closest(".book-content")
+            .querySelector(".book-meta");
+          if (metaContainer) {
+            metaContainer.appendChild(timeTag);
+          }
+        }
+      });
+
+      // Tooltips for truncated text
+      booksGrid
+        .querySelectorAll(".book-title, .book-description")
+        .forEach((element) => {
+          element.addEventListener("mouseenter", function () {
+            if (this.scrollHeight > this.clientHeight) {
+              this.title = this.textContent;
+            }
+          });
+        });
+
+      // First page (no scroll jump)
+      showPage(1, false);
+
+      console.log(`Total Books (after filters): ${books.length}`);
+      console.log(`Pages: ${Math.ceil(books.length / booksPerPage)}`);
+      console.log(`Favorites in storage: ${getFavorites().length}`);
+    }
+
+    // ---------- FILTER + LOAD PIPELINE ----------
+    function applyFiltersAndRender() {
+      const term = searchInput.value.trim().toLowerCase();
+      const favorites = getFavorites();
+      let list = allBooks.slice();
+
+      // Favorites category filter (client-side)
+      if (currentCategory === "favorites") {
+        list = list.filter((b) => favorites.includes(String(b._id)));
+      }
+
+      // FULL TEXT FILTER: title, author, description, country, category, price
+      if (term) {
+        list = list.filter((b) => {
+          const fields = [
+            b.title,
+            b.author,
+            b.description,
+            b.country,
+            b.category,
+            b.price,
+          ];
+          return fields.some(
+            (field) =>
+              field &&
+              String(field).toLowerCase().includes(term)
+          );
+        });
+      }
+
+      renderBooks(list);
+    }
+
+    async function loadAndRender(category) {
+      const baseCategory = category === "favorites" ? "all" : category;
+      const url = `/books?category=${encodeURIComponent(
+        baseCategory
+      )}&title=`;
+
+      loadingEl.style.display = "block";
+
+      try {
+        const res = await fetch(url, {
+          headers: { "X-Requested-With": "XMLHttpRequest" },
+        });
+        const data = await res.json();
+        allBooks = Array.isArray(data.allData) ? data.allData : [];
+      } catch (err) {
+        console.error("Error loading books:", err);
+        allBooks = [];
+      } finally {
+        loadingEl.style.display = "none";
+        applyFiltersAndRender();
+      }
+    }
+
+    // ---------- SEARCH ----------
+    searchForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+    });
+
+    searchInput.addEventListener(
+      "input",
+      debounce(() => {
+        clearBtn.style.display = searchInput.value ? "block" : "none";
+        // No reload, no fetch – just filter client-side
+        applyFiltersAndRender();
+      }, 300)
     );
 
-    // CATEGORY FILTER WITHOUT PAGE RELOAD
-    document.querySelectorAll(".cat-chip").forEach((chip) => {
-      chip.addEventListener("click", function (e) {
+    clearBtn.addEventListener("click", () => {
+      searchInput.value = "";
+      clearBtn.style.display = "none";
+      applyFiltersAndRender();
+    });
+
+    // ---------- CATEGORY CHIPS (NO RELOAD) ----------
+    catChips.forEach((chip) => {
+      chip.addEventListener("click", (e) => {
         e.preventDefault();
 
-        // FIX ACTIVE CHIP
-        document
-          .querySelectorAll(".cat-chip")
-          .forEach((c) => c.classList.remove("active"));
-        this.classList.add("active");
+        catChips.forEach((c) => c.classList.remove("active"));
+        chip.classList.add("active");
 
-        const url = this.getAttribute("href");
-        document.getElementById("loading").style.display = "block";
+        currentCategory = chip.dataset.category || "all";
 
-        fetch(url, { headers: { "X-Requested-With": "XMLHttpRequest" } })
-          .then((res) => res.json())
-          .then((data) => {
-            // FIX TOTAL COUNT
-            document.getElementById("totalCount").textContent =
-              data.allData.length;
-
-            const grid = document.getElementById("booksGrid");
-
-            // Remove old cards
-            grid
-              .querySelectorAll(".book-card, .empty-state")
-              .forEach((el) => el.remove());
-
-            if (data.allData.length === 0) {
-              grid.innerHTML += `
-            <div class="empty-state">
-              <div class="empty-icon"></div>
-              <h2>No books found</h2>
-              <p>Try another category</p>
-            </div>`;
-              return;
-            }
-
-            // Insert new cards
-            data.allData.forEach((book) => {
-              grid.innerHTML += `
-            <div class="book-card" data-book-id="${book._id}">
-              <div class="book-image-container">
-                <button class="book-favorite" onclick="toggleFavorite(event, '${book._id
-                }')">♡</button>
-                ${book.price
-                  ? `<div class="book-badge">${book.price}</div>`
-                  : ""
-                }
-                <img class="book-image" src="${book.image
-                }" onerror="this.src='https://via.placeholder.com/300x450?text=No+Image'">
-                <div class="book-overlay">
-                  <div class="overlay-tags">
-                    <span class="overlay-tag">${book.author}</span>
-                    <span class="overlay-tag">${book.country}</span>
-                  </div>
-                </div>
-              </div>
-              <div class="book-content">
-                <h2 class="book-title">${book.title.join(" ")}</h2>
-                <p class="book-description">${book.description}</p>
-                <div class="book-meta">
-                  <span class="meta-tag">${book.author}</span>
-                  <span class="meta-tag">${book.country}</span>
-                </div>
-                <div class="book-actions">
-                  <form action="/books/${book._id}" style="flex: 1">
-                    <button class="action-btn" type="submit"><span>View Details →</span></button>
-                  </form>
-                </div>
-              </div>
-            </div>`;
-            });
-
-            books = document.querySelectorAll(".book-card");
-            showPage(1, false); // don't scroll to top
-          })
-          .finally(() => {
-            document.getElementById("loading").style.display = "none";
-          });
+        // Fetch from server when category changes (favorites uses 'all' on backend)
+        loadAndRender(currentCategory);
       });
     });
+
+    // ---------- INIT ----------
+    window.addEventListener("load", () => {
+      clearBtn.style.display = searchInput.value ? "block" : "none";
+      // Initial load according to active chip
+      loadAndRender(currentCategory);
+    });
   </script>
+
 </body>
 
 </html>

@@ -2,41 +2,40 @@ let mongoose = require("mongoose")
 
 let Schema = mongoose.Schema;
 let booksData = new Schema({
-    title:{
-        type:[String],
-        required:true,
-
+    title: {
+        type: String,
+        required: true,
     },
-    description:{
-        type:String,
-        required:true
+    category: {
+        type: String,
+        required: true
     },
-    image:{
-        type:String,
-     
-        
+    description: {
+        type: String,
+        required: true
     },
-    price:{
-        type:String,
-        
+    image: {
+        type: String,
     },
-    author:{
-        type:String,
-        required:true
-
+    price: {
+        type: String,
     },
-    country:{
-        type:String,
-        required:true
+    author: {
+        type: String,
+        required: true
     },
-    link:{
-        type:String,
-        required:true
+    country: {
+        type: String,
+        required: true
     },
-    info:{
-        type:String,
-        required:true
+    link: {
+        type: String,
+        required: true
+    },
+    info: {
+        type: String,
+        required: true
     }
 })
-let Data = mongoose.model("Data",booksData)
-module.exports=Data;
+let Data = mongoose.model("Data", booksData)
+module.exports = Data;

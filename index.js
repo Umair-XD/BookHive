@@ -49,44 +49,6 @@ app.get("/", (req, res) => {
   res.render("index.ejs");
 });
 
-// Books Listing Page (with search)
-// app.get("/books", async (req, res) => {
-//   try {
-//     let queryTitle = req.query.title || "";
-//     let filter = {};
-
-//     if (queryTitle) {
-//       // Split search query into words for better search
-//       let searchWords = queryTitle.split(" ").filter((word) => word.length > 0);
-//       let wordFilters = [];
-
-//       searchWords.forEach((word) => {
-//         // Escape special regex chars (fix for "C++" issue)
-//         let safeWord = escapeRegex(word);
-//         let wordRegex = new RegExp(safeWord, "i");
-
-//         wordFilters.push({
-//           $or: [
-//             { title: wordRegex },
-//             { author: wordRegex },
-//             { description: wordRegex },
-//             { country: wordRegex },
-//           ],
-//         });
-//       });
-
-//       if (wordFilters.length > 0) {
-//         filter.$and = wordFilters;
-//       }
-//     }
-
-//     let allData = await Data.find(filter).sort({ title: 1 });
-//     res.render("books.ejs", { allData, queryTitle });
-//   } catch (error) {
-//     console.error("Error fetching books:", error);
-//     res.status(500).send("Error loading books");
-//   }
-// });
 app.get("/books", async (req, res) => {
   try {
     let queryTitle = req.query.title || "";
@@ -94,44 +56,47 @@ app.get("/books", async (req, res) => {
 
     let filter = {};
 
+    // CATEGORY FILTER
     if (category !== "all") {
-      filter.title = { $elemMatch: { $regex: new RegExp(category, "i") } };
+      filter.category = new RegExp(category, "i");
     }
 
-    if (queryTitle) {
-      let searchWords = queryTitle.split(" ").filter(w => w.length > 0);
-      let wordFilters = [];
+    // SEARCH FILTER
+    if (queryTitle.trim() !== "") {
+      const safe = escapeRegex(queryTitle.trim());
+      const regex = new RegExp(safe, "i");
 
-      searchWords.forEach(word => {
-        let safe = word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-        let regex = new RegExp(safe, "i");
-
-        wordFilters.push({
-          $or: [
-            { title: regex },
-            { author: regex },
-            { description: regex },
-            { country: regex }
-          ]
-        });
-      });
-
-      if (wordFilters.length > 0) filter.$and = wordFilters;
+      filter.$or = [
+        { title: regex },
+        { author: regex },
+        { description: regex },
+        { country: regex },
+        { category: regex }
+      ];
     }
 
+    // GET BOOKS
     let allData = await Data.find(filter).sort({ title: 1 });
 
-    // If AJAX request → send JSON (NO PAGE RELOAD)
+    // AJAX REQUEST → Return JSON
     if (req.headers["x-requested-with"] === "XMLHttpRequest") {
       return res.json({ allData });
     }
 
-    let categories = await Data.distinct("title");
+    // GET DISTINCT CATEGORIES FOR CATEGORY BAR
+    let categories = await Data.distinct("category");
 
-    res.render("books.ejs", { allData, queryTitle, category, categories });
-  } catch (error) {
-    console.error(error);
-    res.status(500).send("Error loading books");
+    // RENDER PAGE
+    res.render("books.ejs", {
+      allData,
+      queryTitle,
+      category,
+      categories
+    });
+
+  } catch (err) {
+    console.error("Error loading books:", err);
+    res.status(500).send("Internal Server Error");
   }
 });
 
