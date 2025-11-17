@@ -5,6 +5,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>BookHive</title>
+  <link rel="icon" type="image/png" href="/favicon.png" />
   <style>
     * {
       margin: 0;
@@ -15,23 +16,24 @@
     body {
       font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
       overflow-x: hidden;
-      background: #0a0a0a;
+      background: linear-gradient(180deg,
+          #0a0a0a 0%,
+          #101320 40%,
+          #141829 100%);
       color: #ffffff;
     }
 
     /* Hero Section */
     .hero {
       min-height: 100vh;
-      background: linear-gradient(135deg,
-          #0a0a0a 0%,
-          #1a1a2e 50%,
-          #0f3460 100%);
+      background: linear-gradient(180deg, #0a0a0a 0%, #121522 100%);
       position: relative;
       display: flex;
       align-items: center;
       justify-content: center;
       overflow: hidden;
     }
+
 
     .hero::before {
       content: "";
@@ -233,8 +235,9 @@
     /* Features Section */
     .features {
       padding: 6rem 2rem;
-      background: linear-gradient(180deg, #1a1a2e 0%, #0a0a0a 100%);
+      background: linear-gradient(180deg, #121522 0%, #171b2f 100%);
     }
+
 
     .features-container {
       max-width: 1200px;
@@ -337,8 +340,9 @@
     /* Stats Section */
     .stats {
       padding: 4rem 2rem;
-      background: rgba(229, 9, 20, 0.05);
+      background: linear-gradient(180deg, #171b2f 0%, #131623 100%);
     }
+
 
     .stats-container {
       max-width: 1200px;
@@ -373,9 +377,10 @@
     /* CTA Section */
     .cta-section {
       padding: 6rem 2rem;
-      background: linear-gradient(135deg, #0f3460 0%, #1a1a2e 100%);
+      background: linear-gradient(180deg, #131623 0%, #0d0f17 100%);
       text-align: center;
     }
+
 
     .cta-content {
       max-width: 800px;
@@ -436,7 +441,7 @@
       }
     }
   </style>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
 </head>
 
 <body>
@@ -466,9 +471,7 @@
       </p>
 
       <div class="hero-cta">
-        <a href="/books" class="cta-button cta-primary">
-          Explore Library
-        </a>
+        <a href="/books" class="cta-button cta-primary"> Explore Library </a>
         <a href="#features" class="cta-button cta-secondary"> Learn More </a>
       </div>
     </div>
@@ -489,7 +492,8 @@
           </div>
           <h3 class="feature-title">Vast Collection</h3>
           <p class="feature-description">
-            Access thousands of books across multiple genres, from classic literature to modern bestsellers.
+            Access thousands of books across multiple genres, from classic
+            literature to modern bestsellers.
           </p>
         </div>
 
@@ -499,7 +503,8 @@
           </div>
           <h3 class="feature-title">Smart Search</h3>
           <p class="feature-description">
-            Find exactly what you're looking for with our intelligent search and recommendation system.
+            Find exactly what you're looking for with our intelligent search
+            and recommendation system.
           </p>
         </div>
 
@@ -509,7 +514,8 @@
           </div>
           <h3 class="feature-title">Fast & Easy</h3>
           <p class="feature-description">
-            Browse, search, and discover books with our intuitive and lightning-fast interface.
+            Browse, search, and discover books with our intuitive and
+            lightning-fast interface.
           </p>
         </div>
 
@@ -519,7 +525,8 @@
           </div>
           <h3 class="feature-title">Global Authors</h3>
           <p class="feature-description">
-            Explore works from authors around the world, spanning different cultures and perspectives.
+            Explore works from authors around the world, spanning different
+            cultures and perspectives.
           </p>
         </div>
 
@@ -529,7 +536,8 @@
           </div>
           <h3 class="feature-title">Detailed Info</h3>
           <p class="feature-description">
-            Get comprehensive information about each book including author, country, and descriptions.
+            Get comprehensive information about each book including author,
+            country, and descriptions.
           </p>
         </div>
 
@@ -539,12 +547,11 @@
           </div>
           <h3 class="feature-title">Recommendations</h3>
           <p class="feature-description">
-            Discover new books based on your interests with our smart recommendation engine.
+            Discover new books based on your interests with our smart
+            recommendation engine.
           </p>
         </div>
-
       </div>
-
     </div>
   </section>
 
