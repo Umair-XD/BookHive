@@ -1,7 +1,7 @@
 let Data = require("./models/book")
 let mongoose = require("mongoose")
 async function main() {
-  await mongoose.connect("mongodb+srv://wasifbinnasir:wasifbinnasir@cluster0.h8sdsew.mongodb.net/booksRec?retryWrites=true&w=majority&appName=Cluster0")
+  await mongoose.connect("mongodb+srv://wasifbinnasir:wasifbinnasir@cluster0.h8sdsew.mongodb.net/fizabookhive?retryWrites=true&w=majority&appName=Cluster0")
 }
 main().then(() => {
   console.log("connection established");

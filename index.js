@@ -27,7 +27,7 @@ main()
 
 async function main() {
   await mongoose.connect(
-    "mongodb+srv://wasifbinnasir:wasifbinnasir@cluster0.h8sdsew.mongodb.net/booksRec?retryWrites=true&w=majority&appName=Cluster0"
+    "mongodb+srv://wasifbinnasir:wasifbinnasir@cluster0.h8sdsew.mongodb.net/fizabookhive?retryWrites=true&w=majority&appName=Cluster0"
   );
 }
 
